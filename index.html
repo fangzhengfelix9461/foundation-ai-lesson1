@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="方正 Felix 的 Foundation of AI 第一堂课完整阅读讲义：文字、Token、Embedding、向量、点积、加权求和与注意力。">
+<title>从文字到注意力 · 方正 Felix</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="appbar"><a class="brand" href="#1">Foundation of AI <span>第一堂课</span></a><div class="tools"><button id="tocButton" aria-label="打开目录">目录 <span>☰</span></button><button id="modeButton" aria-pressed="false">连续阅读</button><button id="fontButton" aria-label="调整字号">字大一点</button><button id="fullButton" aria-label="全屏阅读">全屏</button></div></div>
+<main id="deck" aria-label="第一堂课阅读讲义"><div id="track"><section class="slide cover" data-title="从文字开始，理解一次注意力计算" data-chapter="首页"><div class="cover-meta">FOUNDATION OF AI　/　10.23</div><h1>从文字开始，<br>理解一次<span>注意力计算</span></h1><p class="cover-line">第一堂课 · 完整阅读讲义</p><p class="cover-question">“小猫跳上沙发，因为它……”<br>这里的“它”，指谁？</p><div class="cover-bottom"><p><b>方正 Felix</b><br>EDUHK AIDCEC 研究助理</p><button class="primary" data-go="2">开始阅读 <span>→</span></button></div></section>
+<section class="slide bio" data-title="主讲人：方正 Felix" data-chapter="主讲人"><header><span class="eyebrow">主讲人</span><h2>方正 <em>Felix</em></h2></header><div class="slide-body"><p class="bio-role">EDUHK AIDCEC 研究助理</p><div class="bio-grid"><div><h3>教育背景</h3><p>香港理工大学<br><strong>计算机与人工智能博士（在读）</strong></p><p>EDUHK<br><strong>AIEP 硕士</strong></p><p>中国石油大学（北京）<br><strong>石油工程学士</strong></p></div><div><h3>工作经历</h3><p>腾讯<br><strong>数据工程师</strong></p><p>学而思九章大模型 MathGPT<br><strong>推理优化算法工程师</strong></p></div></div></div></section>
+<section class="slide" data-title="课程总览" data-chapter="导读"><header><span class="eyebrow">导读</span><h2>课程总览</h2></header><div class="slide-body"><p class="paragraph" data-source="line-1">10.23 tutorial Foundation of AI</p>
+<p class="paragraph" data-source="line-2">Tutorial 2 · Oct. 23 · 学习范式与Transformer进阶</p>
+<figure data-source="figure-1-0" class="table-original"><button class="image-button" data-image="assets/p01-0.png" data-caption="讲义原图，PDF 第 1 页" aria-label="放大讲义原图，PDF 第 1 页"><img src="assets/p01-0.png" width="1794" height="538" loading="lazy" alt="讲义原图，PDF 第 1 页"></button><figcaption>原讲义图片 · 点击放大</figcaption></figure></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-01.png" data-caption="PDF 第 1 页">原页 1</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="课后视频清单" data-chapter="导读"><header><span class="eyebrow">导读</span><h2>课后视频清单</h2></header><div class="slide-body"><p class="subheading" data-source="line-3">课后视频补充</p>
+<figure data-source="figure-1-1" class="table-original"><button class="image-button" data-image="assets/p01-1.png" data-caption="讲义原图，PDF 第 1 页" aria-label="放大讲义原图，PDF 第 1 页"><img src="assets/p01-1.png" width="1734" height="622" loading="lazy" alt="讲义原图，PDF 第 1 页"></button><figcaption>原讲义图片 · 点击放大</figcaption></figure></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-01.png" data-caption="PDF 第 1 页">原页 1</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="这节课的问题" data-chapter="导读"><header><span class="eyebrow">导读</span><h2>这节课的问题</h2></header><div class="slide-body"><p class="paragraph" data-source="line-4">tutorial Foundation of AI</p>
+<p class="subheading" data-source="line-5">这节课适合沿着一个问题展开：计算机怎样把一句话变成数字，再利用上下文判断每个词的意思，最后预测接下来会出现什么？</p>
+<p class="paragraph" data-source="line-6">由于内容比较多，我分两章讲，所以后面可能没时间留着下节课讲。</p>
+<p class="paragraph" data-source="line-7 line-8">我会讲清楚“一次注意力计算”，再把它扩展成 Transformer，最后比较 BERT 和 GPT。这样大家看到完整公式时，每个符号都已经有具体含义。</p>
+<p class="paragraph" data-source="line-9">全程沿用主视频里的例子：</p>
+<p class="subheading" data-source="line-10">“小猫跳上沙发，因为它……”——这里的“它”指谁？模型该怎样利用前面的文字？</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-01.png" data-caption="PDF 第 1 页">原页 1</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="“它”指谁？" data-chapter="文字与编号"><header><span class="eyebrow">文字与编号</span><h2>“它”指谁？</h2></header><div class="slide-body"><p class="subheading" data-source="line-11">10.23 第一课.从文字开始，理解一次注意力计算</p>
+<p class="subheading" data-source="line-12">“小猫跳上沙发，因为它……”——这里的“它”指谁？模型该怎样利用前面的文字？</p>
+<p class="paragraph" data-source="line-13">“它”指什么，“你为什么知道？”</p>
+<p class="paragraph bullet" data-source="line-14 line-15">• 计算机怎么表示“小猫”这些文字？“我们在电脑上输入‘小猫’，电脑能保存，也能把这两个字显示出来。但这不代表电脑知道小猫会叫、有毛、是一种动物。”</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-01.png" data-caption="PDF 第 1 页">原页 1</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="字符编码：先让文字能被保存" data-chapter="文字与编号"><header><span class="eyebrow">文字与编号</span><h2>字符编码：先让文字能被保存</h2></header><div class="slide-body"><p class="paragraph" data-source="line-16">“就像一个完全不懂中文的人，可以照着样子抄出‘小猫’，但他不知道这两个字是什么意思。”</p>
+<p class="paragraph" data-source="line-17">“计算机最初解决的是：怎样给每个字符规定一个编号，让不同电脑能够一致地保存和显示它。”</p>
+<p class="paragraph" data-source="line-18">这里引出关键概念：<strong>字符编码</strong>。</p>
+<p class="paragraph" data-source="line-19">例如，Unicode 给字符规定编码，UTF-8 是把这些编码存成字节的一种方式。零基础课堂不用展开编码规则，只要记住：</p>
+<p class="focus" data-source="line-20"><strong>字符编码</strong>解决‘这个字怎么存’，还没有解决‘这个词有什么含义’。</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-02.png" data-caption="PDF 第 2 页">原页 2</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="把一句话分成小块" data-chapter="文字与编号"><header><span class="eyebrow">文字与编号</span><h2>把一句话分成小块</h2></header><div class="slide-body"><p class="subheading" data-source="line-21">第二步：如果想分析一句话，就要先把文字分成小块。</p>
+<p class="paragraph" data-source="line-22">“现在电脑里已经存好了‘小猫喜欢吃鱼’。但如果想分析这句话，我们通常还要先把它拆成可以处理的小单位。”</p>
+<p class="paragraph" data-source="line-23">“为了方便理解，先假设拆成‘小猫∕喜欢∕吃∕鱼’。接着给每一块一个编号，就像给学生分配学号。”</p>
+<p class="paragraph" data-source="line-24">小猫是18，鱼是14，是不是意味着小猫比鱼大，小猫就得吃鱼，不是，这俩没关系。</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-02.png" data-caption="PDF 第 2 页">原页 2</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="四个概念，先走一遍" data-chapter="文字与编号"><header><span class="eyebrow">文字与编号</span><h2>四个概念，先走一遍</h2></header><div class="slide-body"><p class="subheading" data-source="line-25">这里引出：分词、词表、Token 和 <strong>Token ID</strong>。</p>
+<p class="paragraph" data-source="line-26">可以把这四个概念记成四个动作：</p>
+<p class="paragraph" data-source="line-27">分词：拆句子 → 词表：得到小块 →Token： 查对照表 → <strong>Token ID</strong>。换成编号。我们用两句话走一遍。</p>
+<p class="paragraph" data-source="line-28 line-29">小猫喜欢吃鱼。小狗喜欢吃鱼。</p>
+<p class="paragraph" data-source="line-30">为了方便理解，下面先不处理句号，编号也是教学示例。</p><aside class="editor-note">阅读提示：这行原文的“词表”和“Token”位置写反了。应理解为：分词（拆句子）→ Token（得到小块）→ 查词表 → Token ID（得到编号）。原文仍完整保留在上方。</aside></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-02.png" data-caption="PDF 第 2 页">原页 2</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="分词：拆开的过程" data-chapter="文字与编号"><header><span class="eyebrow">文字与编号</span><h2>分词：拆开的过程</h2></header><div class="slide-body"><p class="subheading" data-source="line-31">正课.文字怎样进入模型：Token → 编号 → 向量</p>
+<p class="subheading" data-source="line-32">概念1．分词：把一句话拆开</p>
+<p class="paragraph" data-source="line-33">假设我们采用这样的拆法：</p>
+<p class="paragraph example-line" data-source="line-34">代码块</p>
+<p class="paragraph example-line" data-source="line-35">1 小猫喜欢吃鱼 → 小猫 / 喜欢 / 吃 / 鱼</p>
+<p class="paragraph example-line" data-source="line-36">2 小狗喜欢吃鱼 → 小狗 / 喜欢 / 吃 / 鱼</p>
+<p class="focus" data-source="line-37">“分词”就是拆开的这个过程。负责按照规则拆分文字的工具，叫作 <strong>Tokenizer</strong>，可以先理解为“切分工具”。</p>
+<p class="paragraph" data-source="line-38">就像把一串连在一起的积木，拆成几块可以分别处理的小积木。</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-02.png" data-caption="PDF 第 2 页">原页 2</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="Token：拆出来的东西" data-chapter="文字与编号"><header><span class="eyebrow">文字与编号</span><h2>Token：拆出来的东西</h2></header><div class="slide-body"><p class="subheading" data-source="line-39">概念2．Token：拆出来的每一块</p>
+<p class="paragraph" data-source="line-40">上面拆出来的：</p>
+<p class="paragraph example-line" data-source="line-41">代码块</p>
+<p class="paragraph example-line" data-source="line-42">1 “小猫” “喜欢” “吃” “鱼”</p>
+<p class="focus" data-source="line-43">每一块都是一个 Token。</p>
+<p class="paragraph" data-source="line-44">所以要区分：</p>
+<p class="paragraph bullet" data-source="line-45">• 分词：拆的过程。</p>
+<p class="paragraph bullet" data-source="line-46 line-47">• Token：拆出来的东西。“小猫喜欢吃鱼”按这个拆法，一共得到 4个 Token。</p>
+<p class="paragraph" data-source="line-48">还原结果： 小猫喜欢吃鱼</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-02.png" data-caption="PDF 第 2 页">原页 2</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="切分粒度与词性" data-chapter="文字与编号"><header><span class="eyebrow">文字与编号</span><h2>切分粒度与词性</h2></header><div class="slide-body"><p class="paragraph" data-source="line-49">不过，Token 不一定等于我们平时说的一个词。不同切分工具可能采用不同规则：</p>
+<p class="paragraph example-line" data-source="line-50">1代码块一 种拆法：小猫 / 喜欢 / 吃 / 鱼 → 4个 Token</p>
+<p class="paragraph example-line" data-source="line-51">2 另一种拆法：小 / 猫 / 喜 / 欢 / 吃 / 鱼 → 6个 Token</p>
+<p class="paragraph" data-source="line-52">这是按比较完整的词来拆，每一块通常有比较清楚的意思。</p>
+<p class="paragraph" data-source="line-53">这是按单个汉字来拆，块更小。例如“喜”和“欢”被分开了。</p>
+<p class="focus" data-source="line-54">这里区别的是切分粒度，不是词性。</p>
+<p class="paragraph" data-source="line-55">如果我们给“小猫”标上“名词”、给“喜欢”标上“动词”，那叫词性标注，是另一件事：</p>
+<p class="focus" data-source="line-56">因此，同一句话有多少 Token，要看具体使用哪一种切分工具。</p>
+<p class="paragraph" data-source="line-57">大语言模型的 tokenizer 通常不需要先判断“这是名词还是动词”，再决定怎么切。它按照自己的词表和切分规则处理文字。</p>
+<p class="paragraph" data-source="line-58">一个 token 在这里对应的是一组含三个数的向量，而不是“很多组数字”。</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-02.png" data-caption="PDF 第 2 页">原页 2</button> <button class="source-link" data-image="assets/original-page-03.png" data-caption="PDF 第 3 页">原页 3</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="词表：小块与编号的对照表" data-chapter="文字与编号"><header><span class="eyebrow">文字与编号</span><h2>词表：小块与编号的对照表</h2></header><div class="slide-body"><p class="subheading" data-source="line-59">概念3．词表：一张“小块与编号”的对照表</p>
+<p class="paragraph" data-source="line-60">拆完之后，计算机需要知道：“小猫”对应哪个编号，“喜欢”对应哪个编号。</p>
+<p class="paragraph" data-source="line-61">于是，我们准备一张固定的对照表：</p>
+<p class="subheading" data-source="line-62">这张表就叫 词表（<strong>Vocabulary</strong>）。</p>
+<p class="focus" data-source="line-63">“词表就像班级花名册。花名册记录姓名对应的学号，词表记录每个 Token 对应的编号。”</p>
+<p class="paragraph" data-source="line-64">这里虽然叫“词表”，里面也可以收录单个字、标点或词的一部分，不一定全是完整的词。</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-03.png" data-caption="PDF 第 3 页">原页 3</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="一组具体的 Token ID" data-chapter="文字与编号"><header><span class="eyebrow">文字与编号</span><h2>一组具体的 Token ID</h2></header><div class="slide-body"><p class="paragraph" data-source="line-65"><strong>Token ID</strong>： [5820, 48091, 69681, 39276, 28535]</p>
+<p class="focus" data-source="line-66">Token 数量： 5，数字是Token编号，不是有几个token</p>
+<p class="paragraph example-line" data-source="line-67">5820 &#x27;小&#x27;</p>
+<p class="paragraph example-line" data-source="line-68">48091 &#x27;猫&#x27;</p>
+<p class="paragraph example-line" data-source="line-69">69681 &#x27;喜欢&#x27;</p>
+<p class="paragraph example-line" data-source="line-70">39276 &#x27;吃&#x27;</p>
+<p class="paragraph example-line" data-source="line-71">28535 &#x27;鱼&#x27;</p>
+<p class="paragraph" data-source="line-72"><strong>Token ID</strong>查表得到的向量小5820 [0.2, -0.7, 1.1]</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-03.png" data-caption="PDF 第 3 页">原页 3</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="查词表，得到编号" data-chapter="文字与编号"><header><span class="eyebrow">文字与编号</span><h2>查词表，得到编号</h2></header><div class="slide-body"><p class="subheading" data-source="line-73">概念4．<strong>Token ID</strong>：某个 Token 在词表里的编号</p>
+<p class="paragraph" data-source="line-74">查上面这张表：</p>
+<p class="paragraph example-line" data-source="line-75">代码块</p>
+<p class="paragraph example-line" data-source="line-76">1 小猫 → 0</p>
+<p class="paragraph example-line" data-source="line-77">2 喜欢 → 1</p>
+<p class="paragraph example-line" data-source="line-78">3 吃 → 2</p>
+<p class="paragraph example-line" data-source="line-79">4 鱼 → 3</p>
+<p class="focus" data-source="line-80">其中， 0 就是“小猫”的 <strong>Token ID</strong>， 1 就是“喜欢”的 <strong>Token ID</strong>。</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-03.png" data-caption="PDF 第 3 页">原页 3</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="同一词表，同一个编号" data-chapter="文字与编号"><header><span class="eyebrow">文字与编号</span><h2>同一词表，同一个编号</h2></header><div class="slide-body"><p class="paragraph" data-source="line-81">于是，整句话就能转换成编号：</p>
+<p class="paragraph example-line" data-source="line-82">代码块</p>
+<p class="paragraph example-line" data-source="line-83">1 原句： 小猫喜欢吃鱼</p>
+<p class="paragraph example-line" data-source="line-84">2 切分结果： 小猫 / 喜欢 / 吃 / 鱼</p>
+<p class="paragraph example-line" data-source="line-85">3 <strong>Token ID</strong>： [0, 1, 2, 3]</p>
+<p class="paragraph" data-source="line-86">换一句话：</p>
+<p class="paragraph example-line" data-source="line-87">1代码块原句： 小狗喜欢吃鱼</p>
+<p class="paragraph example-line" data-source="line-88">2 切分结果： 小狗 / 喜欢 / 吃 / 鱼</p>
+<p class="paragraph example-line" data-source="line-89">3 <strong>Token ID</strong>： [4, 1, 2, 3]</p>
+<p class="focus" data-source="line-90">注意，“喜欢”在两句话里都是 1 。同一套词表中，同一个 Token 使用相同的编号，不会每读一句话就重新分配。</p>
+<p class="focus" data-source="line-91">这些编号只是身份标记：小狗是 4 、小猫是 0 ，不代表小狗更大、更重要，也不表示它们的含义相差 4 。</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-03.png" data-caption="PDF 第 3 页">原页 3</button> <button class="source-link" data-image="assets/original-page-04.png" data-caption="PDF 第 4 页">原页 4</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="编号只负责区分身份" data-chapter="文字与编号"><header><span class="eyebrow">文字与编号</span><h2>编号只负责区分身份</h2></header><div class="slide-body"><p class="focus" data-source="line-92">“分词，是把句子拆开；Token，是拆出来的每一块；词表，是这些小块与编号的对照表；<strong>Token ID</strong>，就是查表得到的编号。”</p>
+<p class="paragraph" data-source="line-93 line-94">“但编号只告诉计算机‘这是哪一块’，还没有表达这块文字与其他文字有什么关系。所以接下来，我们还要把编号换成一组可以学习的数字——这就是 <strong>Embedding</strong>。”</p>
+<p class="paragraph" data-source="line-95">要顺带说明：实际拆分方式取决于系统，“小猫”可能是一块，也可能拆成“小”和“猫”。</p>
+<p class="paragraph" data-source="line-96">“如果小猫的编号是17，小狗的编号是83，是不是说明小狗比小猫大，或者它们的含义相差66？”</p>
+<p class="focus" data-source="line-97">答案当然不是。这些是你举例用的编号，编号只负责区分身份，数字大小没有语义上的意义。</p>
+<p class="paragraph" data-source="line-98">分词：拆句子 → 词表：得到小块 →Token： 查对照表 → <strong>Token ID</strong>。换成编号。</p><aside class="editor-note">阅读提示：这行原文的“词表”和“Token”位置写反了。应理解为：分词（拆句子）→ Token（得到小块）→ 查词表 → Token ID（得到编号）。原文仍完整保留在上方。</aside></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-04.png" data-caption="PDF 第 4 页">原页 4</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="Embedding：从编号到向量" data-chapter="向量与 Embedding"><header><span class="eyebrow">向量与 Embedding</span><h2>Embedding：从编号到向量</h2></header><div class="slide-body"><p class="subheading" data-source="line-99">概念5. Embeding, 向量、点积、<strong>加权求和</strong>｜14―24分钟</p>
+<p class="paragraph" data-source="line-100">参考视频 《文字如何变成数字》</p>
+<p class="paragraph" data-source="line-101">看前大家想一个问题：</p>
+<p class="paragraph" data-source="line-102">“为什么只给猫和狗各分配一个编号还不够？”</p>
+<p class="focus" data-source="line-103">文字 → Token → <strong>Token ID</strong> → <strong>Embedding</strong>向量：把每个编号换成一组能通过训练学到的数字，供模型计算。</p>
+<p class="paragraph" data-source="line-104">补充说明：视频里的向量维度和相似度数值是具体示例；真实模型不一定使用相同设定。</p>
+<p class="paragraph" data-source="line-105">“现在文字变成了一组数字。接下来，我们只需要认识几种对这些数字进行计算的方法。”</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-04.png" data-caption="PDF 第 4 页">原页 4</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="只有编号，为什么还不够？" data-chapter="向量与 Embedding"><header><span class="eyebrow">向量与 Embedding</span><h2>只有编号，为什么还不够？</h2></header><div class="slide-body"><p class="subheading" data-source="line-106">先说明：编号告诉我们“是谁”，但编号大小不代表含义。</p>
+<p class="paragraph" data-source="line-107">“现在，我们已经给‘猫’和‘狗’各分配了一个编号。计算机可以区分：这是猫，那个是狗。”</p>
+<p class="paragraph" data-source="line-108">“但编号就像学号。两个同学的学号挨在一起，不代表他们性格相似；学号相差很远，也不代表他们没有共同点。”</p>
+<p class="paragraph" data-source="line-109">“同样，猫和狗的编号相差多少，并不能告诉我们：它们都是动物，都可能被人当作宠物养。”</p>
+<p class="focus" data-source="line-110">编号适合查找身份，不能直接用编号的大小和差值表达词语之间的关系。</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-04.png" data-caption="PDF 第 4 页">原页 4</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="给每个词一份更丰富的表示" data-chapter="向量与 Embedding"><header><span class="eyebrow">向量与 Embedding</span><h2>给每个词一份更丰富的表示</h2></header><div class="slide-body"><p class="subheading" data-source="line-111">② 能不能给每个词一份更丰富的数字表示？</p>
+<p class="paragraph" data-source="line-112">“如果模型要处理语言，只知道‘这是第几号词’还不够方便。我们希望它还能通过学习，表示出不同词语之间的联系。”</p>
+<p class="paragraph" data-source="line-113">“所以，接下来我们不只保留一个编号，还给每个词配上一组数字。”</p>
+<p class="paragraph" data-source="line-114">一个小例子：</p>
+<figure data-source="figure-4-0" class="table-original"><button class="image-button" data-image="assets/p04-0.png" data-caption="讲义原图，PDF 第 4 页" aria-label="放大讲义原图，PDF 第 4 页"><img src="assets/p04-0.png" width="1638" height="264" loading="lazy" alt="讲义原图，PDF 第 4 页"></button><figcaption>原讲义图片 · 点击放大</figcaption></figure>
+<p class="subheading" data-source="line-115">这些数字是为了讲解而假设的，<strong>不是真实模型的结果</strong>。现在不用计算，只观察“一组数字”的形式。</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-04.png" data-caption="PDF 第 4 页">原页 4</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="向量：一张数字资料卡" data-chapter="向量与 Embedding"><header><span class="eyebrow">向量与 Embedding</span><h2>向量：一张数字资料卡</h2></header><div class="slide-body"><p class="subheading" data-source="line-116">③ 我们看见这组数字之后，再引出“向量”。</p>
+<p class="focus" data-source="line-117">“像这样，把几个数字<strong>按固定顺序</strong>排在一起，就叫作一个向量。”</p>
+<p class="paragraph" data-source="line-118">“你现在可以先把向量理解成一张数字资料卡。以前每个词只有一个编号，现在每个词都有一张包含多个数字的资料卡。”</p>
+<p class="paragraph" data-source="line-119">“‘猫’有一张，‘狗’有一张，‘汽车’也有一张。在同一个模型里，这些资料卡的长度是一样的。”</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-04.png" data-caption="PDF 第 4 页">原页 4</button> <button class="source-link" data-image="assets/original-page-05.png" data-caption="PDF 第 5 页">原页 5</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="Embedding 具体做什么？" data-chapter="向量与 Embedding"><header><span class="eyebrow">向量与 Embedding</span><h2>Embedding 具体做什么？</h2></header><div class="slide-body"><p class="subheading" data-source="line-120">④ 再解释 <strong>Embedding</strong> 具体做什么。</p>
+<p class="focus" data-source="line-121">“根据一个词的编号，找到它对应的这张数字资料卡，这一步就是这里的 <strong>Embedding</strong>，也叫嵌入。”</p>
+<p class="paragraph" data-source="line-122">“这张卡上的数字不是永远固定、随便填进去的。训练时，模型会不断调整它们，使这些数字更有助于完成语言任务。”</p>
+<p class="paragraph" data-source="line-123">“例如，猫和狗经常出现在相似的语境里，模型就可能学到它们之间的联系，并把这种联系体现在数字表示中。”</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-05.png" data-caption="PDF 第 5 页">原页 5</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="学号与身高、体重" data-chapter="向量与 Embedding"><header><span class="eyebrow">向量与 Embedding</span><h2>学号与身高、体重</h2></header><div class="slide-body"><p class="paragraph" data-source="line-124">向量和普通的编号有什么区别</p>
+<p class="subheading" data-source="line-125">第一步：先用大家熟悉的例子，区分“编号”和“描述”。</p>
+<p class="paragraph" data-source="line-126">“假设一个学生的学号是28。只看28，我们能知道他多高、多重吗？”</p>
+<p class="paragraph" data-source="line-127">“不能。换成29号，他也不会因此长高一厘米。学号只是用来找到这个人。”</p>
+<p class="paragraph" data-source="line-128">“但如果我告诉你，这个学生身高175厘米、体重65公斤，那这两个数字就有不同的作用了：它们在描述这个人。”</p>
+<p class="paragraph" data-source="line-129">“把身高和体重按照固定顺序放在一起，写成 [175, 65] ，这就是一个最简单的向量。”</p>
+<p class="focus" data-source="line-130">重点不是数字变多了，而是数字的用途变了。</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-05.png" data-caption="PDF 第 5 页">原页 5</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="猫、狗、汽车的六句话" data-chapter="共现与真实词向量"><header><span class="eyebrow">共现与真实词向量</span><h2>猫、狗、汽车的六句话</h2></header><div class="slide-body"><p class="subheading" data-source="line-131">第二步：再回到猫、狗、汽车，展示“文字也可以用特征描述”。</p>
+<p class="paragraph" data-source="line-132">先不要讲真实 <strong>Embedding</strong> 的训练过程。做一个可以看懂的小实验：</p>
+<p class="paragraph" data-source="line-133">“现在我们看看，在一批文章里，猫、狗、汽车分别经常和哪些词一起出现。”</p>
+<p class="paragraph" data-source="line-134">“我们暂时只观察三个词：‘喂食’‘宠物’‘加油’。”</p>
+<p class="paragraph" data-source="line-135">展示这张假设的统计表：</p>
+<p class="paragraph" data-source="line-136">假设我们只有这些文本：</p>
+<p class="paragraph example-line" data-source="line-137">代码块</p>
+<p class="paragraph example-line" data-source="line-138">1 ① 我给猫喂食。</p>
+<p class="paragraph example-line" data-source="line-139">2 ② 猫是宠物。</p>
+<p class="paragraph example-line" data-source="line-140">3 ③ 我给猫和狗喂食。</p>
+<p class="paragraph example-line" data-source="line-141">4 ④ 狗是宠物。</p>
+<p class="paragraph example-line" data-source="line-142">5 ⑤ 我给汽车加油。</p>
+<p class="paragraph example-line" data-source="line-143">6 ⑥ 汽车需要加油。</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-05.png" data-caption="PDF 第 5 页">原页 5</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="固定规则，固定顺序" data-chapter="共现与真实词向量"><header><span class="eyebrow">共现与真实词向量</span><h2>固定规则，固定顺序</h2></header><div class="slide-body"><p class="paragraph" data-source="line-144">然后明确规定一个简单的统计规则：</p>
+<p class="focus" data-source="line-145">只要目标词和关键词出现在同一句话里，就记一次。</p>
+<p class="paragraph" data-source="line-146">我们选择三个关键词，并固定顺序：</p>
+<p class="paragraph example-line" data-source="line-147">代码块</p>
+<p class="paragraph example-line" data-source="line-148">1 第一个位置：喂食</p>
+<p class="paragraph example-line" data-source="line-149">2 第二个位置：宠物</p>
+<p class="paragraph example-line" data-source="line-150">3 第三个位置：加油</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-05.png" data-caption="PDF 第 5 页">原页 5</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="逐个数出“猫”的数字" data-chapter="共现与真实词向量"><header><span class="eyebrow">共现与真实词向量</span><h2>逐个数出“猫”的数字</h2></header><div class="slide-body"><p class="subheading" data-source="line-151">2．带学生逐个数，“猫”的数字就出来了</p>
+<p class="paragraph" data-source="line-152">问：“猫”和“喂食”在几句话里一起出现？</p>
+<p class="paragraph bullet" data-source="line-153">• 第①句有。</p>
+<p class="paragraph bullet" data-source="line-154">• 第③句也有。</p>
+<p class="paragraph bullet" data-source="line-155 line-156">• 所以记 2。问：“猫”和“宠物”一起出现几次？</p>
+<p class="paragraph bullet" data-source="line-157">• 第②句有。</p>
+<p class="paragraph bullet" data-source="line-158 line-159">• 所以记 1。问：“猫”和“加油”一起出现几次？</p>
+<p class="paragraph bullet" data-source="line-160">• 六句话中没有。</p>
+<p class="paragraph bullet" data-source="line-161 line-162">• 所以记 0。填进表格就是：</p>
+<p class="paragraph" data-source="line-163 line-164">汽车的前两个数是零，只表示在这六句话中，它没有与“喂食”“宠物”同句出现。不是说它们在任何文章中都不可能一起出现。</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-05.png" data-caption="PDF 第 5 页">原页 5</button> <button class="source-link" data-image="assets/original-page-06.png" data-caption="PDF 第 6 页">原页 6</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="把一行统计结果写成向量" data-chapter="共现与真实词向量"><header><span class="eyebrow">共现与真实词向量</span><h2>把一行统计结果写成向量</h2></header><div class="slide-body"><p class="subheading" data-source="line-165">3．向量就是把表格中的一行，按约定顺序取出来</p>
+<p class="paragraph" data-source="line-166">把列名暂时省略：</p>
+<p class="paragraph example-line" data-source="line-167">代码块</p>
+<p class="paragraph example-line" data-source="line-168 line-169">1 约定顺序：[喂食次数, 宠物次数, 加油次数]2</p>
+<p class="paragraph example-line" data-source="line-170">3 猫： [2, 1, 0]</p>
+<p class="paragraph example-line" data-source="line-171">4 狗： [1, 1, 0]</p>
+<p class="paragraph example-line" data-source="line-172">5 汽车： [0, 0, 2]</p>
+<p class="focus" data-source="line-173 line-174">“没有发生什么神秘的转换。我们只是把‘猫’这一行的三个统计结果，<strong>按固定顺序</strong>放进了方括号。这就是一个<strong>三维向量</strong>：有三个位置，每个位置放一个数。”</p>
+<p class="subheading" data-source="line-175">这里的“维度”，先理解成表格中的一个特征列就可以。这个顺序不是按数字大小排序，也不一定非要横着写</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-06.png" data-caption="PDF 第 6 页">原页 6</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="顺序可以改，但必须一起改" data-chapter="共现与真实词向量"><header><span class="eyebrow">共现与真实词向量</span><h2>顺序可以改，但必须一起改</h2></header><div class="slide-body"><p class="paragraph" data-source="line-176">顺序是我们事先约定的。比如也可以改成：</p>
+<p class="paragraph example-line" data-source="line-177">代码块</p>
+<p class="paragraph example-line" data-source="line-178 line-179">1 新顺序：[加油次数, 喂食次数, 宠物次数]2</p>
+<p class="paragraph example-line" data-source="line-180">3 猫： [0, 2, 1]</p>
+<p class="paragraph example-line" data-source="line-181">4 狗： [0, 1, 1]</p>
+<p class="paragraph example-line" data-source="line-182">5 汽车： [2, 0, 0]</p>
+<p class="focus" data-source="line-183">信息没有变，只是所有行一起调整了列的顺序。</p>
+<p class="focus" data-source="line-184">不能只改猫的顺序，却不改狗和汽车的顺序，否则同一个位置代表的事情就不一样了。</p>
+<p class="paragraph" data-source="line-185">横着写是为了方便展示；数学中也可以竖着写。关键是明确每个位置对应什么，并在后续运算中保持一致。</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-06.png" data-caption="PDF 第 6 页">原页 6</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="为什么这样的数字有用？" data-chapter="共现与真实词向量"><header><span class="eyebrow">共现与真实词向量</span><h2>为什么这样的数字有用？</h2></header><div class="slide-body"><p class="subheading" data-source="line-186">5．为什么要这样表示？</p>
+<p class="paragraph" data-source="line-187 line-188 line-189">“以前，一个编号只能告诉我们‘这是猫’。现在，这三个数还能告诉我们：猫在这批文字里，常常出现在什么样的环境中。“猫和狗的前两个位置都有数，而汽车主要在第三个位置有数。所以，即使暂时不看词本身，我们也能从这些数字里观察到：猫和狗的使用环境更相似。把这些观察写成数字，计算机接下来就能通过运算比较它们。”</p>
+<p class="focus" data-source="line-190 line-191 line-192">“我们刚才做的是一个简单的‘<strong>共现计数向量</strong>’，用来理解向量怎样描述信息。真实语言模型的 <strong>Embedding</strong> 通常不是直接数这三个关键词，而是在训练中学出一组数字。现在先理解‘多个位置、固定顺序、共同描述一个对象’，后面再讲这些数字怎样学出来。”</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-06.png" data-caption="PDF 第 6 页">原页 6</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="真实案例：GloVe 词向量" data-chapter="共现与真实词向量"><header><span class="eyebrow">共现与真实词向量</span><h2>真实案例：GloVe 词向量</h2></header><div class="slide-body"><p class="subheading" data-source="line-193">真实的 <strong>GloVe</strong> 词向量模型来举例：</p>
+<p class="paragraph" data-source="line-194">它直接从词语的共现统计中学习向量，能衔接我们刚才那张“喂食、宠物、加油”的表。</p>
+<p class="paragraph" data-source="line-195">斯坦福 <strong>GloVe</strong> 官方介绍</p>
+<p class="subheading" data-source="line-196">1．真实模型里的向量，确实长这样</p>
+<p class="focus" data-source="line-197">每个词都有50个数。下面只展示前6个，后面还有44个：</p>
+<p class="paragraph example-line" data-source="line-198">1代码块ca t（猫）：</p>
+<p class="paragraph example-line" data-source="line-199 line-200">2 [0.45281, -0.50108, -0.53714, -0.015697, 0.22191, 0.54602, ...]3</p>
+<p class="paragraph example-line" data-source="line-201">4 dog（狗）：</p>
+<p class="paragraph example-line" data-source="line-202 line-203">5 [0.11008, -0.38781, -0.57615, -0.27714, 0.70521, 0.53994, ...]6</p>
+<p class="paragraph example-line" data-source="line-204">7 car（汽车）：</p>
+<p class="paragraph example-line" data-source="line-205">8 [0.47685, -0.084552, 1.4641, 0.047017, 0.14686, 0.5082, ...]</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-06.png" data-caption="PDF 第 6 页">原页 6</button> <button class="source-link" data-image="assets/original-page-07.png" data-caption="PDF 第 7 页">原页 7</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="0.45281 究竟是什么意思？" data-chapter="共现与真实词向量"><header><span class="eyebrow">共现与真实词向量</span><h2>0.45281 究竟是什么意思？</h2></header><div class="slide-body"><p class="paragraph" data-source="line-206">“猫的第一个数 0.45281 是什么意思？”</p>
+<p class="paragraph" data-source="line-207 line-208">“它不是‘猫出现了多少次’，也不能直接解释成‘猫有多像宠物’。它是模型训练出来的一个参数，要和其他49个数一起发挥作用。”</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-07.png" data-caption="PDF 第 7 页">原页 7</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="训练：让数字表达规律" data-chapter="共现与真实词向量"><header><span class="eyebrow">共现与真实词向量</span><h2>训练：让数字表达规律</h2></header><div class="slide-body"><p class="subheading" data-source="line-209">2．那这些数究竟怎么来的？</p>
+<p class="paragraph" data-source="line-210">模拟案例里，“我们亲手统计了猫和‘喂食、宠物、加油’一起出现的次数。</p>
+<p class="paragraph" data-source="line-211">真实的 <strong>GloVe</strong> 也会先收集词语一起出现的统计，它读的文章更多，观察的词也更多。”</p>
+<p class="paragraph" data-source="line-212 line-213">“我们给每个词准备50个可以调整的数。一开始，这些数通常是随机的。模型用这些数去计算词语之间的关系，再看计算结果能不能符合文章里的共现规律。如果不符合，就调整这些数。”</p>
+<p class="paragraph" data-source="line-214">“经过很多次调整，这50个数就逐渐能够保留词语使用情况中的一些规律。”</p>
+<p class="paragraph" data-source="line-215">因此，前面那张表与真实模型的区别是：</p>
+<p class="focus" data-source="line-216">不是把统计表中的次数原样抄进去，而是让一组可调整的数字学会表达其中的规律。</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-07.png" data-caption="PDF 第 7 页">原页 7</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="怎样知道整组数字有用？" data-chapter="共现与真实词向量"><header><span class="eyebrow">共现与真实词向量</span><h2>怎样知道整组数字有用？</h2></header><div class="slide-body"><p class="subheading" data-source="line-217">3．如果单个数字看不懂，怎么知道整组数字有用？</p>
+<p class="paragraph" data-source="line-218">看它们一起参与计算后，能得到什么结果。</p>
+<p class="paragraph" data-source="line-219 line-220">我用三个词的完整50维向量计算了余弦相似度——模型里面没有一个人手工写下‘猫和狗都是宠物，所以它们应该接近’。但是，用训练后的整组数字进行比较，猫和狗确实比猫和汽车更接近。”</p>
+<p class="focus" data-source="line-221">“这就是我们说的：词语之间的某些联系，体现在了向量中。”</p>
+<p class="paragraph" data-source="line-222">注意，这体现的是这套模型从语料中学到的关系，不是一个适用于所有含义、所有场景的判断。</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-07.png" data-caption="PDF 第 7 页">原页 7</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="每一维不一定有人类标签" data-chapter="共现与真实词向量"><header><span class="eyebrow">共现与真实词向量</span><h2>每一维不一定有人类标签</h2></header><div class="slide-body"><p class="subheading" data-source="line-223">4．为什么不能给每一个位置都起一个名字？</p>
+<p class="paragraph" data-source="line-224">因为训练时，我们没有布置这样的要求：</p>
+<p class="paragraph example-line" data-source="line-225">代码块</p>
+<p class="paragraph example-line" data-source="line-226">1 第1个数：表示是不是动物</p>
+<p class="paragraph example-line" data-source="line-227">2 第2个数：表示是不是宠物</p>
+<p class="paragraph example-line" data-source="line-228">3 第3个数：表示有没有轮子</p>
+<p class="paragraph" data-source="line-229">我们布置的是：</p>
+<p class="subheading" data-source="line-230">“调整这些数字，让它们共同算出的结果，更符合文章中词语的共现规律。”</p>
+<p class="focus" data-source="line-231">所以，模型得到的是<strong>共同发挥作用</strong>的一组数，而不是一张每列都有人类标签的分类表。</p>
+<p class="focus" data-source="line-232 line-233">“词的编号是查找用的；词向量是计算用的。向量里的单个数，我们未必能直接解释，但把整组数放在一起计算，就能反映训练中学到的一些词语关系。”</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-07.png" data-caption="PDF 第 7 页">原页 7</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="再理解一次 Embedding" data-chapter="共现与真实词向量"><header><span class="eyebrow">共现与真实词向量</span><h2>再理解一次 Embedding</h2></header><div class="slide-body"><p class="subheading" data-source="line-234"><strong>Embedding</strong>定义。</p>
+<p class="focus" data-source="line-235 line-236 line-237 line-238">“刚才这张表是一个帮助理解的简单例子。现代语言模型的 <strong>Embedding</strong>，并不是直接把‘喂食、宠物、加油’这三列次数拿来用。真实模型会在训练中学出一组数字，让这些数字有助于完成语言任务。每一个位置通常也没有‘宠物次数’这样可以直接命名的意思。但你现在已经理解了最关键的区别：编号只是区分一个词，向量则提供了一种可以学习、可以计算的表示，让模型有办法利用词语之间的关系。</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-07.png" data-caption="PDF 第 7 页">原页 7</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="把 Token ID 与向量接起来" data-chapter="共现与真实词向量"><header><span class="eyebrow">共现与真实词向量</span><h2>把 Token ID 与向量接起来</h2></header><div class="slide-body"><p class="subheading" data-source="line-239">最后，再把 <strong>Token ID</strong> 和向量接起来。</p>
+<p class="paragraph" data-source="line-240">“编号并没有被扔掉。模型仍然先用编号找到这个 token，再查到它对应的向量。”</p>
+<p class="paragraph" data-source="line-241">“就像先用学号找到学生，再读取他的身高、体重。学号负责查找，后面的数值负责描述。”</p>
+<p class="paragraph" data-source="line-242">于是完整流程就清楚了：</p>
+<p class="paragraph example-line" data-source="line-243">代码块</p>
+<p class="paragraph example-line" data-source="line-244">1 文字</p>
+<p class="paragraph example-line" data-source="line-245">2 ↓ 切分</p>
+<p class="paragraph example-line" data-source="line-246">3 Token</p>
+<p class="paragraph example-line" data-source="line-247">4 ↓ 查词表</p>
+<p class="paragraph example-line" data-source="line-248">5 <strong>Token ID</strong>：用来找到它</p>
+<p class="paragraph example-line" data-source="line-249">6 ↓ 查嵌入表</p>
+<p class="paragraph example-line" data-source="line-250">7 <strong>Embedding</strong> 向量：用来表示它，参与后续计算</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-07.png" data-caption="PDF 第 7 页">原页 7</button> <button class="source-link" data-image="assets/original-page-08.png" data-caption="PDF 第 8 页">原页 8</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="编号负责找，向量参与算" data-chapter="共现与真实词向量"><header><span class="eyebrow">共现与真实词向量</span><h2>编号负责找，向量参与算</h2></header><div class="slide-body"><p class="subheading" data-source="line-251">编号”和“特征数值”的区别：一行特征数值就是一个向量。</p>
+<p class="focus" data-source="line-252">“编号像学号，用来找到一个词；向量像一张可以通过学习不断调整的数字资料卡，用来让模型处理这个词。”</p>
+<p class="paragraph" data-source="line-253 line-254">“至于怎样比较这些资料卡、怎样把它们组合起来，我们后面再讲。现在大家只需要知道：经过 <strong>Embedding</strong>，每个 token 都有了一个固定长度的向量表示。”</p>
+<p class="focus" data-source="line-255">拆句子 → 得到 Token → 查词表得到编号 → 根据编号查出向量 → 后续模型处理这些向量。</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-08.png" data-caption="PDF 第 8 页">原页 8</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="回到“小猫”和“沙发”" data-chapter="向量与点积"><header><span class="eyebrow">向量与点积</span><h2>回到“小猫”和“沙发”</h2></header><div class="slide-body"><p class="subheading" data-source="line-256">向量、点积和<strong>加权求和</strong></p>
+<p class="subheading" data-source="line-257">小猫趴在沙发上，它正在打呼噜。</p>
+<p class="paragraph" data-source="line-258">我们要帮助模型处理的问题始终是：</p>
+<p class="subheading" data-source="line-259">这里的“它”，指的是谁？</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-08.png" data-caption="PDF 第 8 页">原页 8</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="两个位置，表示两类线索" data-chapter="向量与点积"><header><span class="eyebrow">向量与点积</span><h2>两个位置，表示两类线索</h2></header><div class="slide-body"><p class="subheading" data-source="line-260">1．向量：把几项信息放在一起</p>
+<p class="paragraph" data-source="line-261">“我们先看句子里的两个词：小猫和沙发。”</p>
+<p class="paragraph" data-source="line-262">“小猫带有动物方面的信息，沙发带有家具方面的信息。为了让计算机可以处理，我们先把这些信息用数字表示出来。”</p>
+<p class="paragraph" data-source="line-263">为了方便讲解，我们人为约定两个位置：</p>
+<p class="paragraph bullet" data-source="line-264">• 第一个位置：动物线索。</p>
+<p class="paragraph bullet" data-source="line-265 line-266">• 第二个位置：家具线索。于是：</p>
+<figure data-source="figure-8-0" class="table-original"><button class="image-button" data-image="assets/p08-0.png" data-caption="讲义原图，PDF 第 8 页" aria-label="放大讲义原图，PDF 第 8 页"><img src="assets/p08-0.png" width="1674" height="210" loading="lazy" alt="讲义原图，PDF 第 8 页"></button><figcaption>原讲义图片 · 点击放大</figcaption></figure></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-08.png" data-caption="PDF 第 8 页">原页 8</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="二维向量在案例里有什么用？" data-chapter="向量与点积"><header><span class="eyebrow">向量与点积</span><h2>二维向量在案例里有什么用？</h2></header><div class="slide-body"><p class="paragraph" data-source="line-267">“这里用1表示有这类线索，用0表示没有。”</p>
+<p class="focus" data-source="line-268">“这就是一个<strong>二维向量</strong>。你现在不用把‘向量’想得很难，它就是把同一个对象的几项信息，<strong>按固定顺序</strong>放在一起。”</p>
+<p class="paragraph" data-source="line-269">“它有什么用？原来我们用语言描述‘小猫是动物、沙发是家具’，现在把这些信息写成一组数字，就可以进行计算了。”</p>
+<p class="focus" data-source="line-270 line-271">“两组数字的位置必须保持一致。第一个位置始终表示动物线索，第二个位置始终表示家具线索，否则后面就会把不同信息混在一起。”</p>
+<p class="focus" data-source="line-272">“这两个维度是我们为了教学人为设计的，方便看懂计算；真实模型里的词向量会更复杂。”</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-08.png" data-caption="PDF 第 8 页">原页 8</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="点积：按当前标准打分" data-chapter="向量与点积"><header><span class="eyebrow">向量与点积</span><h2>点积：按当前标准打分</h2></header><div class="slide-body"><p class="subheading" data-source="line-273">2．点积：按一套标准，把一份信息算成一个分数</p>
+<p class="paragraph" data-source="line-274">“现在我们读到‘它正在打呼噜’，想从前面找一个与动物线索有关的对象。”</p>
+<p class="paragraph" data-source="line-275">“那么，我们这次匹配时，就先关注动物线索。”</p>
+<p class="paragraph" data-source="line-276">把这次的匹配标准也写成一个向量：</p>
+<p class="paragraph" data-source="line-277">[1,0]</p>
+<p class="paragraph" data-source="line-278">“第一个位置是1，表示这次关注动物线索；第二个位置是0，表示这次的匹配标准不关注家具线索。”</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-08.png" data-caption="PDF 第 8 页">原页 8</button> <button class="source-link" data-image="assets/original-page-09.png" data-caption="PDF 第 9 页">原页 9</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="先给“小猫”打分" data-chapter="向量与点积"><header><span class="eyebrow">向量与点积</span><h2>先给“小猫”打分</h2></header><div class="slide-body"><p class="paragraph" data-source="line-279">先让它与“小猫”的信息做点积：</p>
+<div class="formula" aria-label="公式清晰排版">[1, 0] · [1, 0] = 1 × 1 + 0 × 0 = 1</div>
+<figure data-source="figure-9-0" class="equation-original"><button class="image-button" data-image="assets/p09-0.png" data-caption="公式原图：[1, 0] · [1, 0] = 1 × 1 + 0 × 0 = 1" aria-label="放大公式原图：[1, 0] · [1, 0] = 1 × 1 + 0 × 0 = 1"><img src="assets/p09-0.png" width="356" height="59" loading="lazy" alt="公式原图：[1, 0] · [1, 0] = 1 × 1 + 0 × 0 = 1"></button><figcaption>原图 · 点击放大</figcaption></figure>
+<p class="paragraph" data-source="line-280">拆开来说：</p>
+<p class="paragraph bullet" data-source="line-281">• 动物线索： 1×1 = 1。</p>
+<p class="paragraph bullet" data-source="line-282">• 家具线索： 0×0 = 0。</p>
+<p class="focus bullet" data-source="line-283 line-284">• 最后相加： 1+0 = 1。“<strong>对应位置相乘</strong>，再把结果加起来，就叫点积。”</p>
+<p class="paragraph" data-source="line-285">“这里，我们用它把一个词的信息，按照当前的匹配标准，算成了一个分数。”</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-09.png" data-caption="PDF 第 9 页">原页 9</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="再给“沙发”打分" data-chapter="向量与点积"><header><span class="eyebrow">向量与点积</span><h2>再给“沙发”打分</h2></header><div class="slide-body"><p class="paragraph" data-source="line-286">“沙发”也用同一标准：</p>
+<div class="formula" aria-label="公式清晰排版">[1, 0] · [0, 1] = 1 × 0 + 0 × 1 = 0</div>
+<figure data-source="figure-9-1" class="equation-original"><button class="image-button" data-image="assets/p09-1.png" data-caption="公式原图：[1, 0] · [0, 1] = 1 × 0 + 0 × 1 = 0" aria-label="放大公式原图：[1, 0] · [0, 1] = 1 × 0 + 0 × 1 = 0"><img src="assets/p09-1.png" width="309" height="60" loading="lazy" alt="公式原图：[1, 0] · [0, 1] = 1 × 0 + 0 × 1 = 0"></button><figcaption>原图 · 点击放大</figcaption></figure>
+<p class="paragraph" data-source="line-287">结果如下：</p>
+<figure data-source="figure-9-2" class="table-original"><button class="image-button" data-image="assets/p09-2.png" data-caption="讲义原图，PDF 第 9 页" aria-label="放大讲义原图，PDF 第 9 页"><img src="assets/p09-2.png" width="1628" height="210" loading="lazy" alt="讲义原图，PDF 第 9 页"></button><figcaption>原讲义图片 · 点击放大</figcaption></figure>
+<p class="paragraph" data-source="line-288">“这次我们关注动物线索，所以‘小猫’得到更高的<strong>匹配分数</strong>。”</p>
+<p class="focus" data-source="line-289">“这个分数告诉我们：按照当前的标准，小猫比沙发更匹配。”</p>
+<p class="focus" data-source="line-290">这里先不说“点积越大就一定越相似”。在这个案例中，它表示的是按当前标准得到的<strong>匹配分数</strong>。</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-09.png" data-caption="PDF 第 9 页">原页 9</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="加权求和：把信息合起来" data-chapter="加权求和"><header><span class="eyebrow">加权求和</span><h2>加权求和：把信息合起来</h2></header><div class="slide-body"><p class="subheading" data-source="line-291">3．<strong>加权求和</strong>：把几份信息，合成一份新信息</p>
+<p class="subheading" data-source="line-292">先说最关键的：如果任务只是“找出哪个是动物”，小猫1、沙发0，已经够了。</p>
+<p class="subheading" data-source="line-293">但现在的任务是：接着“小猫跳上沙发，因为它……”往下写。</p>
+<p class="paragraph" data-source="line-294">往下写时，我们需要知道两件事：</p>
+<p class="paragraph bullet" data-source="line-295">• 谁在做动作？小猫。</p>
+<p class="paragraph bullet" data-source="line-296 line-297">• 动作发生在哪里？沙发上。所以，不能选出小猫后，就把沙发的信息全扔掉。</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-09.png" data-caption="PDF 第 9 页">原页 9</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="参考谁，取决于当前问题" data-chapter="加权求和"><header><span class="eyebrow">加权求和</span><h2>参考谁，取决于当前问题</h2></header><div class="slide-body"><p class="paragraph" data-source="line-298">“如果现在问的是：小猫睡在哪里呢？”</p>
+<p class="paragraph" data-source="line-299">“这时候，我们就需要重点参考‘沙发’，因为它提供了位置。”</p>
+<p class="paragraph" data-source="line-300">所以在我们的案例里，小猫’这条信息更直接地帮助我们判断‘它’是谁。”</p>
+<p class="paragraph" data-source="line-301">“‘沙发’也有用，但它主要告诉我们事情发生在哪里。所以，在这次判断里，我们可以更多参考小猫，少一些参考沙发。”</p>
+<p class="paragraph" data-source="line-302">“刚才的比较告诉我们：这里应该更多地参考小猫。”</p>
+<p class="focus" data-source="line-303">“但‘更多一点’到底是多少？计算机不能照着‘多一点、少一点’去算，我们要给它具体的比例。”</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-09.png" data-caption="PDF 第 9 页">原页 9</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="为什么需要具体的比例？" data-chapter="加权求和"><header><span class="eyebrow">加权求和</span><h2>为什么需要具体的比例？</h2></header><div class="slide-body"><p class="focus" data-source="line-304">这里的百分比，不是为了重新判断谁是动物，而是为了规定两份信息怎么合在一起。</p>
+<p class="focus" data-source="line-305">如果两项原来都是0，换算之后就是各50%，仍然分不出谁更重要。这个换算器不能帮前面的计算发现新区别。</p>
+<p class="focus" data-source="line-306">“前一步比较谁更值得参考；这一步把‘多参考一点、少参考一点’变成具体比例，方便下一步把信息合起来。”</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-09.png" data-caption="PDF 第 9 页">原页 9</button> <button class="source-link" data-image="assets/original-page-10.png" data-caption="PDF 第 10 页">原页 10</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="先认识“比例换算器”" data-chapter="加权求和"><header><span class="eyebrow">加权求和</span><h2>先认识“比例换算器”</h2></header><div class="slide-body"><p class="paragraph" data-source="line-307">这里放一个简单的“<strong>比例换算器</strong>”，暂时不讲名称和公式：</p>
+<p class="focus" data-source="line-308">“我们先借助一个<strong>比例换算器</strong>。它接收刚才的整组<strong>匹配分数</strong>，按照固定规则，把分数换成具体比例。”</p>
+<p class="paragraph" data-source="line-309">把完整过程画出来：</p>
+<div class="formula" aria-label="公式清晰排版">小猫 1 分，沙发 0 分 → 比例换算器 → 小猫约 73%，沙发约 27%</div>
+<figure data-source="figure-10-0" class="equation-original"><button class="image-button" data-image="assets/p10-0.png" data-caption="公式原图：小猫 1 分，沙发 0 分 → 比例换算器 → 小猫约 73%，沙发约 27%" aria-label="放大公式原图：小猫 1 分，沙发 0 分 → 比例换算器 → 小猫约 73%，沙发约 27%"><img src="assets/p10-0.png" width="641" height="80" loading="lazy" alt="公式原图：小猫 1 分，沙发 0 分 → 比例换算器 → 小猫约 73%，沙发约 27%"></button><figcaption>原图 · 点击放大</figcaption></figure><aside class="editor-note">原 PDF 的红字是未渲染的公式源码。上方提供了相同数字与含义的清晰排版，原图仍保留。</aside></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-10.png" data-caption="PDF 第 10 页">原页 10</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="73% 与 27% 从哪里来？" data-chapter="加权求和"><header><span class="eyebrow">加权求和</span><h2>73% 与 27% 从哪里来？</h2></header><div class="slide-body"><p class="paragraph" data-source="line-310 line-311">“所以，我们使用一套固定的换算规则，算出：汇总时，小猫的信息乘大约0.73，沙发的信息乘大约0.27，再把两份结果加起来。”（别问怎么算的）</p>
+<p class="subheading" data-source="line-312">“这样，</p>
+<p class="paragraph bullet" data-source="line-313">• 谁在做动作？小猫。</p>
+<p class="paragraph bullet" data-source="line-314">• 动作发生在哪里？沙发上。</p>
+<p class="focus bullet" data-source="line-315 line-316">• 小猫的信息用得多一些，沙发的信息也保留一些不然这个任务进行不了。”“73%和27%是这个换算器根据刚才那组分数算出来的，不是我们另外指定的。”</p>
+<p class="focus" data-source="line-317">“它也不是直接把分数当百分比，所以1分不直接等于100%，0分也不直接等于完全不参考。”</p>
+<p class="paragraph" data-source="line-318">“这个换算器内部怎样计算，我们稍后再讲。现在先看：得到比例以后，怎样把信息合起来。”</p><aside class="editor-note">阅读提示：这里用“主体与场景”解释信息汇总的用途。保留沙发信息不是所有任务的硬性要求。</aside></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-10.png" data-caption="PDF 第 10 页">原页 10</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="内容与比例，是两件事" data-chapter="加权求和"><header><span class="eyebrow">加权求和</span><h2>内容与比例，是两件事</h2></header><div class="slide-body"><p class="paragraph" data-source="line-319">已有两份信息：</p>
+<p class="paragraph bullet" data-source="line-320">• 小猫： [1,0]，参考约73%。</p>
+<p class="focus bullet" data-source="line-321 line-322">• 沙发： [0,1]，参考约27%。73%只告诉我们“小猫这份信息用多少”， [1,0] 告诉我们“小猫这份信息里面有什么”。</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-10.png" data-caption="PDF 第 10 页">原页 10</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="小猫：每一项都取 73%" data-chapter="加权求和"><header><span class="eyebrow">加权求和</span><h2>小猫：每一项都取 73%</h2></header><div class="slide-body"><p class="paragraph" data-source="line-323">“之前我们规定第一个位置表示动物线索，第二个位置表示家具线索。”</p>
+<p class="paragraph" data-source="line-324">“小猫的 [1,0] 就表示：带来1份动物线索，0份家具线索。”</p>
+<p class="focus" data-source="line-325">“现在我们决定，让小猫这份信息按73%的比例参与汇总。那它里面的每一项，都只贡献原来的73%。”</p>
+<p class="paragraph" data-source="line-326">所以：</p>
+<p class="paragraph example-line" data-source="line-327">代码块</p>
+<p class="paragraph example-line" data-source="line-328">1 原来有1份动物线索 → 贡献其中的73% → 0.73份</p>
+<p class="paragraph example-line" data-source="line-329">2 原来有0份家具线索 → 贡献其中的73% → 仍然是0份</p>
+<p class="paragraph" data-source="line-330">这就是：</p>
+<div class="formula" aria-label="公式清晰排版">73% × [1, 0] = [0.73, 0]</div>
+<figure data-source="figure-10-1" class="equation-original"><button class="image-button" data-image="assets/p10-1.png" data-caption="公式原图：73% × [1, 0] = [0.73, 0]" aria-label="放大公式原图：73% × [1, 0] = [0.73, 0]"><img src="assets/p10-1.png" width="235" height="70" loading="lazy" alt="公式原图：73% × [1, 0] = [0.73, 0]"></button><figcaption>原图 · 点击放大</figcaption></figure></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-10.png" data-caption="PDF 第 10 页">原页 10</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="沙发：每一项都取 27%" data-chapter="加权求和"><header><span class="eyebrow">加权求和</span><h2>沙发：每一项都取 27%</h2></header><div class="slide-body"><p class="paragraph" data-source="line-331">再看沙发：</p>
+<p class="paragraph" data-source="line-332">“沙发的 [0,1] 表示：0份动物线索，1份家具线索。”</p>
+<p class="focus" data-source="line-333">“让沙发按27%的比例参与，就是它里面每一项都贡献原来的27%。”</p>
+<p class="paragraph example-line" data-source="line-334">代码块</p>
+<p class="paragraph example-line" data-source="line-335">1 原来有0份动物线索 → 贡献其中的27% → 仍然是0份</p>
+<p class="paragraph example-line" data-source="line-336">2 原来有1份家具线索 → 贡献其中的27% → 0.27份</p>
+<p class="paragraph" data-source="line-337">这就是：</p>
+<div class="formula" aria-label="公式清晰排版">27% × [0, 1] = [0, 0.27]</div>
+<figure data-source="figure-11-0" class="equation-original"><button class="image-button" data-image="assets/p11-0.png" data-caption="公式原图：27% × [0, 1] = [0, 0.27]" aria-label="放大公式原图：27% × [0, 1] = [0, 0.27]"><img src="assets/p11-0.png" width="234" height="54" loading="lazy" alt="公式原图：27% × [0, 1] = [0, 0.27]"></button><figcaption>原图 · 点击放大</figcaption></figure></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-10.png" data-caption="PDF 第 10 页">原页 10</button> <button class="source-link" data-image="assets/original-page-11.png" data-caption="PDF 第 11 页">原页 11</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="求和：把同类线索合起来" data-chapter="加权求和"><header><span class="eyebrow">加权求和</span><h2>求和：把同类线索合起来</h2></header><div class="slide-body"><p class="paragraph" data-source="line-338">最后，把同类线索放在一起：</p>
+<p class="paragraph example-line" data-source="line-339">代码块</p>
+<p class="paragraph example-line" data-source="line-340">1 动物线索：小猫贡献0.73 ＋ 沙发贡献0 ＝ 0.73</p>
+<p class="paragraph example-line" data-source="line-341">2 家具线索：小猫贡献0 ＋ 沙发贡献0.27 ＝ 0.27</p>
+<p class="focus" data-source="line-342">乘法是在决定“每份信息实际贡献多少”，加法是在把这些贡献合起来。</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-11.png" data-caption="PDF 第 11 页">原页 11</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="同一个权重，不同的原始内容" data-chapter="加权求和"><header><span class="eyebrow">加权求和</span><h2>同一个权重，不同的原始内容</h2></header><div class="slide-body"><p class="focus" data-source="line-343 line-344">这个例子的最终结果 [0.73,0.27] ，恰好和两个权重长得一样，是因为我们特意用了 [1,0] 和 [0,1] 这两组特别简单的信息。</p>
+<p class="paragraph" data-source="line-345">如果小猫的信息假设是 [2,0] ，仍然参考73%，它贡献的就会是：</p>
+<div class="formula" aria-label="公式清晰排版">73% × [2, 0] = [1.46, 0]</div>
+<figure data-source="figure-11-1" class="equation-original"><button class="image-button" data-image="assets/p11-1.png" data-caption="公式原图：73% × [2, 0] = [1.46, 0]" aria-label="放大公式原图：73% × [2, 0] = [1.46, 0]"><img src="assets/p11-1.png" width="245" height="60" loading="lazy" alt="公式原图：73% × [2, 0] = [1.46, 0]"></button><figcaption>原图 · 点击放大</figcaption></figure>
+<p class="focus" data-source="line-346">所以，只知道73%还不够，还必须知道它要乘的原始信息是什么。</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-11.png" data-caption="PDF 第 11 页">原页 11</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="相乘以后，才知道实际贡献" data-chapter="加权求和"><header><span class="eyebrow">加权求和</span><h2>相乘以后，才知道实际贡献</h2></header><div class="slide-body"><p class="focus" data-source="line-347 line-348">“向量告诉我们‘有什么、原来有多少’，权重告诉我们‘这次按多大比例使用’。把它们相乘，才知道这份信息这次实际贡献多少。”</p>
+<p class="focus" data-source="line-349">这里的“动物线索、家具线索”和数字都是人为设置的教学示例，真实词向量的每一项通常没有这样明确的名称。</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-11.png" data-caption="PDF 第 11 页">原页 11</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="完整回顾：先乘，再加" data-chapter="加权求和"><header><span class="eyebrow">加权求和</span><h2>完整回顾：先乘，再加</h2></header><div class="slide-body"><p class="paragraph" data-source="line-350">我们回顾一下这个步骤：</p>
+<p class="paragraph" data-source="line-351">先把每份信息中的各个数字，都乘上这份信息的比例：</p>
+<div class="formula" aria-label="公式清晰排版">73% × [1, 0] = [0.73, 0]<br>27% × [0, 1] = [0, 0.27]</div>
+<figure data-source="figure-11-2" class="equation-original"><button class="image-button" data-image="assets/p11-2.png" data-caption="公式原图：73% × [1, 0] = [0.73, 0]
+27% × [0, 1] = [0, 0.27]" aria-label="放大公式原图：73% × [1, 0] = [0.73, 0]
+27% × [0, 1] = [0, 0.27]"><img src="assets/p11-2.png" width="295" height="105" loading="lazy" alt="公式原图：73% × [1, 0] = [0.73, 0]
+27% × [0, 1] = [0, 0.27]"></button><figcaption>原图 · 点击放大</figcaption></figure>
+<p class="paragraph" data-source="line-352">再把对应位置相加：</p>
+<div class="formula" aria-label="公式清晰排版">[0.73, 0] + [0, 0.27] = [0.73, 0.27]</div>
+<figure data-source="figure-11-3" class="equation-original"><button class="image-button" data-image="assets/p11-3.png" data-caption="公式原图：[0.73, 0] + [0, 0.27] = [0.73, 0.27]" aria-label="放大公式原图：[0.73, 0] + [0, 0.27] = [0.73, 0.27]"><img src="assets/p11-3.png" width="336" height="74" loading="lazy" alt="公式原图：[0.73, 0] + [0, 0.27] = [0.73, 0.27]"></button><figcaption>原图 · 点击放大</figcaption></figure>
+<p class="paragraph" data-source="line-353">也可以画成表格：</p>
+<figure data-source="figure-11-4" class="table-original"><button class="image-button" data-image="assets/p11-4.png" data-caption="讲义原图，PDF 第 11 页" aria-label="放大讲义原图，PDF 第 11 页"><img src="assets/p11-4.png" width="800" height="170" loading="lazy" alt="讲义原图，PDF 第 11 页"></button><figcaption>原讲义图片 · 点击放大</figcaption></figure></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-11.png" data-caption="PDF 第 11 页">原页 11</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="[0.73, 0.27] 是什么？" data-chapter="加权求和"><header><span class="eyebrow">加权求和</span><h2>[0.73, 0.27] 是什么？</h2></header><div class="slide-body"><p class="paragraph" data-source="line-354">“我们最开始要处理的是‘它指谁’这个问题。”</p>
+<p class="paragraph" data-source="line-355">“现在，模型从前面汇总到了这样一份信息：动物线索比较强，家具线索比较弱。”</p>
+<p class="paragraph" data-source="line-356">“这份信息可以交给后面的计算，帮助处理‘它’在这句话里的含义。”</p>
+<p class="paragraph" data-source="line-357">给结果一个明确名称：</p>
+<p class="focus" data-source="line-358">“ [0.73,0.27] 是这次得到的<strong>上下文信息汇总</strong>。”</p>
+<p class="focus" data-source="line-359">它<strong>不是最终答案</strong>，也不表示“它这个字有73%的概率就是小猫”。这里先理解为：给后续判断提供的一份信息。</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-11.png" data-caption="PDF 第 11 页">原页 11</button> <button class="source-link" data-image="assets/original-page-12.png" data-caption="PDF 第 12 页">原页 12</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="点积与加权求和的区别" data-chapter="加权求和"><header><span class="eyebrow">加权求和</span><h2>点积与加权求和的区别</h2></header><div class="slide-body"><p class="subheading" data-source="line-360">4．把点积和<strong>加权求和</strong>放在一起，看清差别</p>
+<figure data-source="figure-12-0" class="table-original"><button class="image-button" data-image="assets/p12-0.png" data-caption="讲义原图，PDF 第 12 页" aria-label="放大讲义原图，PDF 第 12 页"><img src="assets/p12-0.png" width="1892" height="248" loading="lazy" alt="讲义原图，PDF 第 12 页"></button><figcaption>原讲义图片 · 点击放大</figcaption></figure>
+<p class="paragraph" data-source="line-361">“这两种操作都用到了乘法和加法，并不矛盾。”</p>
+<p class="focus" data-source="line-362">“我们现在重点区分的是：给信息打分，还是把信息合起来。”</p>
+<p class="focus" data-source="line-363">“点积帮助我们判断哪些信息更匹配；<strong>加权求和</strong>帮助我们把信息汇总过来。”</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-12.png" data-caption="PDF 第 12 页">原页 12</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="把整个案例再串起来" data-chapter="加权求和"><header><span class="eyebrow">加权求和</span><h2>把整个案例再串起来</h2></header><div class="slide-body"><p class="subheading" data-source="line-364">5．先把整个案例讲通，再说它叫什么</p>
+<p class="subheading" data-source="line-365">小猫趴在沙发上，它正在打呼噜。</p>
+<p class="paragraph" data-source="line-366">“我们读这句话时，先遇到一个需要处理的问题：这里的‘它’指谁？”</p>
+<p class="paragraph" data-source="line-367">“接着，我们看看前面有什么：小猫、沙发。”</p>
+<p class="paragraph" data-source="line-368">“再根据当前需要的线索，判断哪些词更匹配。在这个例子里，小猫更匹配。”</p>
+<p class="paragraph" data-source="line-369">“但只有‘更匹配’还不够。我们还要知道，汇总信息时，小猫具体参考多少，沙发具体参考多少。”</p>
+<p class="paragraph" data-source="line-370">“所以，我们把<strong>匹配分数</strong>交给<strong>比例换算器</strong>，得到73%和27%。”</p>
+<p class="paragraph" data-source="line-371">“最后，按照这两个比例，把小猫和沙发提供的信息合起来，得到一份新的上下文信息。”</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-12.png" data-caption="PDF 第 12 页">原页 12</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="这个过程叫注意力机制" data-chapter="Q、K、V 与注意力"><header><span class="eyebrow">Q、K、V 与注意力</span><h2>这个过程叫注意力机制</h2></header><div class="slide-body"><p class="paragraph" data-source="line-372">概念6.注意力机制</p>
+<p class="focus" data-source="line-373">“刚才这种根据当前需要，计算各份信息的匹配程度，再按比例汇总信息的过程，就是我们现在要理解的注意力机制。”</p>
+<p class="subheading" data-source="line-374">小猫趴在沙发上，它正在打呼噜。它指谁？</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-12.png" data-caption="PDF 第 12 页">原页 12</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="Q：当前用来发起匹配的信息" data-chapter="Q、K、V 与注意力"><header><span class="eyebrow">Q、K、V 与注意力</span><h2>Q：当前用来发起匹配的信息</h2></header><div class="slide-body"><p class="subheading" data-source="line-375">1．Q与K的定义：当前需要什么，对应Q；拿什么来匹配，对应K</p>
+<p class="paragraph" data-source="line-376">“刚才这次计算，是从什么开始的？”</p>
+<p class="paragraph" data-source="line-377">从当前要处理的问题开始：</p>
+<p class="paragraph" data-source="line-378">“我们正在理解‘它’，需要从前文寻找相关线索。”</p>
+<p class="focus" data-source="line-379">它指谁？这个“问题”或者“当前用来发起匹配的信息”，对应 Q，Query，查询。</p>
+<p class="paragraph" data-source="line-380 line-381">在这个教学案例里，有一个很复杂的步骤帮我们定义查询的任务目标，先不讲，假设我们知道，第一个位置，它是要查动物，第二个位置要查家具，而我们已经明确了要查的是动物。</p>
+<div class="formula" aria-label="公式清晰排版">Q = [1, 0]</div>
+<figure data-source="figure-12-1" class="equation-original"><button class="image-button" data-image="assets/p12-1.png" data-caption="公式原图：Q = [1, 0]" aria-label="放大公式原图：Q = [1, 0]"><img src="assets/p12-1.png" width="159" height="49" loading="lazy" alt="公式原图：Q = [1, 0]"></button><figcaption>原图 · 点击放大</figcaption></figure>
+<p class="paragraph" data-source="line-382">在这个案例里，我们要问的问题如果用向量表示，位置1为动物表示，1表示重要，位置2为家具表示，对于我要问的问题不重要</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-12.png" data-caption="PDF 第 12 页">原页 12</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="K：供我们判断匹配程度的信息" data-chapter="Q、K、V 与注意力"><header><span class="eyebrow">Q、K、V 与注意力</span><h2>K：供我们判断匹配程度的信息</h2></header><div class="slide-body"><p class="paragraph" data-source="line-383">“我们怎样知道小猫和沙发，哪个更符合这次需要？”这一步我们暂时理解这两个实体的验证</p>
+<p class="paragraph" data-source="line-384">因为它们各自有不同的特点：</p>
+<p class="paragraph bullet" data-source="line-385">• 小猫提供动物线索。</p>
+<p class="focus bullet" data-source="line-386 line-387">• 沙发提供家具线索。这些“供我们判断匹配程度的信息”，对应 K，Key，键。大家可以先理解成验证信息。</p>
+<figure data-source="figure-13-0" class="table-original"><button class="image-button" data-image="assets/p13-0.png" data-caption="讲义原图，PDF 第 13 页" aria-label="放大讲义原图，PDF 第 13 页"><img src="assets/p13-0.png" width="436" height="155" loading="lazy" alt="讲义原图，PDF 第 13 页"></button><figcaption>原讲义图片 · 点击放大</figcaption></figure><aside class="editor-note">沿用后文的说明：动物/家具标签用于教学 V。这里 K 只是匹配用的数字，不把 K 的两个维度继续命名为动物/家具。</aside></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-12.png" data-caption="PDF 第 12 页">原页 12</button> <button class="source-link" data-image="assets/original-page-13.png" data-caption="PDF 第 13 页">原页 13</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="Q 与 K 计算匹配分数" data-chapter="Q、K、V 与注意力"><header><span class="eyebrow">Q、K、V 与注意力</span><h2>Q 与 K 计算匹配分数</h2></header><div class="slide-body"><p class="paragraph" data-source="line-388">“所以，Q和K做点积，就是拿当前的匹配标准，分别给前面的信息打分。”</p>
+<p class="paragraph" data-source="line-389">此时回看刚才的结果即可，不重新换数字：小猫：1X1+0X2=1 沙发：</p>
+<p class="paragraph" data-source="line-390">得出小猫是1，沙发是0</p>
+<figure data-source="figure-13-1" class="table-original"><button class="image-button" data-image="assets/p13-1.png" data-caption="讲义原图，PDF 第 13 页" aria-label="放大讲义原图，PDF 第 13 页"><img src="assets/p13-1.png" width="1336" height="324" loading="lazy" alt="讲义原图，PDF 第 13 页"></button><figcaption>原讲义图片 · 点击放大</figcaption></figure></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-13.png" data-caption="PDF 第 13 页">原页 13</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="比例换算器的名字：softmax" data-chapter="Q、K、V 与注意力"><header><span class="eyebrow">Q、K、V 与注意力</span><h2>比例换算器的名字：softmax</h2></header><div class="slide-body"><p class="subheading" data-source="line-391">2．刚才的“<strong>比例换算器</strong>”，就叫<strong>softmax</strong></p>
+<p class="paragraph" data-source="line-392">“刚才我们一直在用一个功能：输入<strong>匹配分数</strong>，输出参考比例。”</p>
+<p class="paragraph" data-source="line-393">“这个<strong>比例换算器</strong>，在注意力机制里叫作 <strong>softmax</strong>。”</p>
+<div class="formula" aria-label="公式清晰排版">匹配分数 → softmax：比例换算器 → 参考比例</div>
+<figure data-source="figure-13-2" class="equation-original"><button class="image-button" data-image="assets/p13-2.png" data-caption="公式原图：匹配分数 → softmax：比例换算器 → 参考比例" aria-label="放大公式原图：匹配分数 → softmax：比例换算器 → 参考比例"><img src="assets/p13-2.png" width="496" height="60" loading="lazy" alt="公式原图：匹配分数 → softmax：比例换算器 → 参考比例"></button><figcaption>原图 · 点击放大</figcaption></figure></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-13.png" data-caption="PDF 第 13 页">原页 13</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="softmax 只处理前面的分数" data-chapter="Q、K、V 与注意力"><header><span class="eyebrow">Q、K、V 与注意力</span><h2>softmax 只处理前面的分数</h2></header><div class="slide-body"><p class="paragraph" data-source="line-394">“它自己不阅读句子，也不判断小猫和沙发。”</p>
+<p class="focus" data-source="line-395">“它只处理前面已经算好的分数，把整组分数换成一组加起来等于100%的比例。”</p>
+<p class="paragraph" data-source="line-396">“在我们这个例子里，输入是1和0，输出约为73%和27%。”</p>
+<p class="paragraph" data-source="line-397">这一阶段不展开指数公式，我们只记住它的功能：</p>
+<p class="focus" data-source="line-398">“前面负责判断匹配程度，<strong>softmax</strong>负责把<strong>匹配分数</strong>换成后面能使用的比例。”</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-13.png" data-caption="PDF 第 13 页">原页 13</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="注意力权重：汇总时要乘的数" data-chapter="Q、K、V 与注意力"><header><span class="eyebrow">Q、K、V 与注意力</span><h2>注意力权重：汇总时要乘的数</h2></header><div class="slide-body"><p class="paragraph" data-source="line-399">然后命名：</p>
+<p class="focus" data-source="line-400">“刚才的73%和27%，在注意力机制里就叫作<strong>注意力权重</strong>。”</p>
+<p class="focus" data-source="line-401">“它不是什么看不见的注意力能量，就是汇总信息时，各份信息要乘的那个数。”</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-13.png" data-caption="PDF 第 13 页">原页 13</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="V：真正参与汇总的内容" data-chapter="Q、K、V 与注意力"><header><span class="eyebrow">Q、K、V 与注意力</span><h2>V：真正参与汇总的内容</h2></header><div class="slide-body"><p class="subheading" data-source="line-402">8．真正拿来汇总的内容，对应V</p>
+<p class="paragraph" data-source="line-403">“比例已经知道了，那我们拿什么来乘这些比例？”</p>
+<p class="paragraph" data-source="line-404">拿“小猫”和“沙发”提供的信息：</p>
+<p class="paragraph bullet" data-source="line-405">• 小猫提供的内容： [1,0]。</p>
+<p class="paragraph bullet" data-source="line-406">• 沙发提供的内容： [0,1]。</p>
+<figure data-source="figure-13-3" class="table-original"><button class="image-button" data-image="assets/p13-3.png" data-caption="讲义原图，PDF 第 13 页" aria-label="放大讲义原图，PDF 第 13 页"><img src="assets/p13-3.png" width="765" height="165" loading="lazy" alt="讲义原图，PDF 第 13 页"></button><figcaption>原讲义图片 · 点击放大</figcaption></figure></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-13.png" data-caption="PDF 第 13 页">原页 13</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="K 与 V：两份数据，两种用途" data-chapter="Q、K、V 与注意力"><header><span class="eyebrow">Q、K、V 与注意力</span><h2>K 与 V：两份数据，两种用途</h2></header><div class="slide-body"><p class="focus" data-source="line-407 line-408">这些真正被乘上权重、再加起来的内容，对应 V，Value，值。是老师给定的教学数字。前面“动物线索、家具线索”的解释，只用于本例的V，不再用来解释K的两个位置。K这里只作为参与匹配的数字介绍。</p>
+<p class="focus" data-source="line-409">“每个位置准备两份数据。这里左边这份用来匹配，右边这份用来提供内容。我们先用匹配这份，另一份留到汇总时再用。”</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-14.png" data-caption="PDF 第 14 页（第一堂课部分）">原页 14</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="点积这一步，只拿 Q 和 K" data-chapter="Q、K、V 与注意力"><header><span class="eyebrow">Q、K、V 与注意力</span><h2>点积这一步，只拿 Q 和 K</h2></header><div class="slide-body"><p class="subheading" data-source="line-410">点积这一步，只拿Q和K计算：</p>
+<div class="formula" aria-label="公式清晰排版">Q = [1, 0]</div>
+<figure data-source="figure-14-0" class="equation-original"><button class="image-button" data-image="assets/p14-0.png" data-caption="公式原图：Q = [1, 0]" aria-label="放大公式原图：Q = [1, 0]"><img src="assets/p14-0.png" width="159" height="49" loading="lazy" alt="公式原图：Q = [1, 0]"></button><figcaption>原图 · 点击放大</figcaption></figure>
+<p class="paragraph" data-source="line-411">小猫：</p>
+<div class="formula" aria-label="公式清晰排版">[1, 0] · [1, 2] = 1 × 1 + 0 × 2 = 1</div>
+<figure data-source="figure-14-1" class="equation-original"><button class="image-button" data-image="assets/p14-1.png" data-caption="公式原图：[1, 0] · [1, 2] = 1 × 1 + 0 × 2 = 1" aria-label="放大公式原图：[1, 0] · [1, 2] = 1 × 1 + 0 × 2 = 1"><img src="assets/p14-1.png" width="340" height="54" loading="lazy" alt="公式原图：[1, 0] · [1, 2] = 1 × 1 + 0 × 2 = 1"></button><figcaption>原图 · 点击放大</figcaption></figure>
+<p class="paragraph" data-source="line-412">沙发：</p>
+<div class="formula" aria-label="公式清晰排版">[1, 0] · [0, 3] = 1 × 0 + 0 × 3 = 0</div>
+<figure data-source="figure-14-2" class="equation-original"><button class="image-button" data-image="assets/p14-2.png" data-caption="公式原图：[1, 0] · [0, 3] = 1 × 0 + 0 × 3 = 0" aria-label="放大公式原图：[1, 0] · [0, 3] = 1 × 0 + 0 × 3 = 0"><img src="assets/p14-2.png" width="335" height="54" loading="lazy" alt="公式原图：[1, 0] · [0, 3] = 1 × 0 + 0 × 3 = 0"></button><figcaption>原图 · 点击放大</figcaption></figure></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-14.png" data-caption="PDF 第 14 页（第一堂课部分）">原页 14</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="由匹配分数，得到参考比例" data-chapter="Q、K、V 与注意力"><header><span class="eyebrow">Q、K、V 与注意力</span><h2>由匹配分数，得到参考比例</h2></header><div class="slide-body"><p class="paragraph" data-source="line-413">可以这样解释：</p>
+<p class="focus" data-source="line-414">“当前这组Q算出来，小猫的<strong>匹配分数</strong>是1，沙发是0。这里得到的只是<strong>匹配分数</strong>，还没有汇总任何内容。”</p>
+<p class="paragraph" data-source="line-415">然后沿用已经讲过的“<strong>比例换算器</strong>”：</p>
+<p class="focus" data-source="line-416"><strong>匹配分数</strong>1、0 → <strong>softmax</strong> → 约73%、27%。</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-14.png" data-caption="PDF 第 14 页（第一堂课部分）">原页 14</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="最后把权重用在 V 上" data-chapter="Q、K、V 与注意力"><header><span class="eyebrow">Q、K、V 与注意力</span><h2>最后把权重用在 V 上</h2></header><div class="slide-body"><p class="subheading" data-source="line-417">到<strong>加权求和</strong>这一步，再明确把目光移到V这一列：</p>
+<p class="paragraph" data-source="line-418">“参考比例已经算好了。现在我们使用右边那份内容，把它们按比例合起来。”</p>
+<div class="formula" aria-label="公式清晰排版">0.73[1, 0] + 0.27[0, 1] = [0.73, 0.27]</div>
+<figure data-source="figure-14-3" class="equation-original"><button class="image-button" data-image="assets/p14-3.png" data-caption="公式原图：0.73[1, 0] + 0.27[0, 1] = [0.73, 0.27]" aria-label="放大公式原图：0.73[1, 0] + 0.27[0, 1] = [0.73, 0.27]"><img src="assets/p14-3.png" width="379" height="60" loading="lazy" alt="公式原图：0.73[1, 0] + 0.27[0, 1] = [0.73, 0.27]"></button><figcaption>原图 · 点击放大</figcaption></figure>
+<p class="focus" data-source="line-419">“小猫提供的内容V是 [1,0]，取73%；沙发提供的内容V是 [0,1]，取27%。最后得到新的上下文信息 [0.73,0.27]。”</p></div><footer class="slide-footer"><button class="source-link" data-image="assets/original-page-14.png" data-caption="PDF 第 14 页（第一堂课部分）">原页 14</button><span class="scroll-hint" hidden>本页还有内容，向下阅读 ↓</span></footer></section>
+<section class="slide" data-title="视频链接与课后阅读" data-chapter="课后资源"><header><span class="eyebrow">课后资源</span><h2>视频链接与课后阅读</h2></header><div class="slide-body resource-list"><a href="http://xhslink.com/m/lcIXwUKMkE" target="_blank" rel="noopener"><b>文字如何变成数字</b><span>1 分 30 秒 · 复习编号与向量 ↗</span></a><a href="http://xhslink.com/m/7LwgcyTZRsg" target="_blank" rel="noopener"><b>Transformer 注意力机制详解</b><span>11 分 44 秒 · 复习 Q/K 匹配与 V 加权汇总 ↗</span></a><a href="http://xhslink.com/m/8NvSu7LSeyu" target="_blank" rel="noopener"><b>Transformer 统治 AI 与神经网络的进化</b><span>11 分 11 秒 · 课外拓展 ↗</span></a><a href="http://xhslink.com/m/6gm7NNdoj2a" target="_blank" rel="noopener"><b>大模型如何学会与人聊天</b><span>12 分 24 秒 · 课外拓展 ↗</span></a><a href="https://nlp.stanford.edu/projects/glove/" target="_blank" rel="noopener"><b>斯坦福 GloVe 官方介绍</b><span>阅读词向量的训练思路 ↗</span></a></div></section></div></main>
+<nav class="navigation" aria-label="翻页"><button id="prev" aria-label="上一页">← <span>上一页</span></button><div class="page-position"><span id="chapterLabel"></span><label><input id="pageInput" type="number" min="1" value="1" aria-label="跳到页码"><span id="total"></span></label></div><button id="next" aria-label="下一页"><span>下一页</span> →</button></nav>
+<div class="progress" aria-hidden="true"><div id="progressFill"></div></div>
+<dialog id="tocDialog"><div class="dialog-top"><h2>课程目录</h2><button data-close="tocDialog" aria-label="关闭目录">✕</button></div><input id="search" type="search" placeholder="搜索标题或正文，如 0.73、GloVe、K" aria-label="搜索讲义"><div id="tocList"></div></dialog>
+<dialog id="imageDialog"><div class="dialog-top"><span id="imageCaption"></span><div class="image-tools"><button id="zoomOut" aria-label="缩小图片">−</button><output id="zoomValue">100%</output><button id="zoomIn" aria-label="放大图片">＋</button><a id="originalLink" target="_blank" rel="noopener">打开原图 ↗</a><button data-close="imageDialog" aria-label="关闭图片">✕</button></div></div><div class="image-view"><img id="zoomImage" alt=""></div></dialog>
+<div id="liveStatus" class="sr-only" aria-live="polite"></div>
+<script src="reader.js"></script>
+</body></html>

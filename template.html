@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="方正 Felix 的 Foundation of AI 第一堂课完整阅读讲义：文字、Token、Embedding、向量、点积、加权求和与注意力。">
+<title>从文字到注意力 · 方正 Felix</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="appbar"><a class="brand" href="#1">Foundation of AI <span>第一堂课</span></a><div class="tools"><button id="tocButton" aria-label="打开目录">目录 <span>☰</span></button><button id="modeButton" aria-pressed="false">连续阅读</button><button id="fontButton" aria-label="调整字号">字大一点</button><button id="fullButton" aria-label="全屏阅读">全屏</button></div></div>
+<main id="deck" aria-label="第一堂课阅读讲义"><div id="track"><!-- CONTENT --></div></main>
+<nav class="navigation" aria-label="翻页"><button id="prev" aria-label="上一页">← <span>上一页</span></button><div class="page-position"><span id="chapterLabel"></span><label><input id="pageInput" type="number" min="1" value="1" aria-label="跳到页码"><span id="total"></span></label></div><button id="next" aria-label="下一页"><span>下一页</span> →</button></nav>
+<div class="progress" aria-hidden="true"><div id="progressFill"></div></div>
+<dialog id="tocDialog"><div class="dialog-top"><h2>课程目录</h2><button data-close="tocDialog" aria-label="关闭目录">✕</button></div><input id="search" type="search" placeholder="搜索标题或正文，如 0.73、GloVe、K" aria-label="搜索讲义"><div id="tocList"></div></dialog>
+<dialog id="imageDialog"><div class="dialog-top"><span id="imageCaption"></span><div class="image-tools"><button id="zoomOut" aria-label="缩小图片">−</button><output id="zoomValue">100%</output><button id="zoomIn" aria-label="放大图片">＋</button><a id="originalLink" target="_blank" rel="noopener">打开原图 ↗</a><button data-close="imageDialog" aria-label="关闭图片">✕</button></div></div><div class="image-view"><img id="zoomImage" alt=""></div></dialog>
+<div id="liveStatus" class="sr-only" aria-live="polite"></div>
+<script src="reader.js"></script>
+</body></html>
